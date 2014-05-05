@@ -13,8 +13,7 @@ Group:      System/Other
 License:    Proprietary
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)
-BuildRequires:  pkgconfig(Qt5Qml)
-BuildRequires:  qt5-qttools
+BuildRequires:  pkgconfig(packagekit-qt5)
 ##remove?Provides:   jolla-settings-system
 
 %description
