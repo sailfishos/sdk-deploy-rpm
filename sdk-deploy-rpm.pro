@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS += sdk-deploy-rpm
+SUBDIRS += src 

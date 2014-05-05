@@ -9,4 +9,5 @@ SOURCES += deployer.cpp
 HEADERS += deployer.h
 
 target.path = /usr/bin
+TARGET = sdk-deploy-rpm
 INSTALLS += target
