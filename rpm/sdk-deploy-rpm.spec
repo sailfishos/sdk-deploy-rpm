@@ -10,11 +10,10 @@ Summary:    Tool to install rpm packages.
 Version:    0.0.1
 Release:    1
 Group:      System/Other
-License:    Proprietary
+License:    BSD
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(packagekit-qt5)
-##remove?Provides:   jolla-settings-system
 
 %description
 Tool to make rpm installations in SailfishOS with new Packagekit.
