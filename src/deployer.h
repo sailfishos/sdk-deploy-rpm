@@ -40,7 +40,7 @@ class Deployer : public QObject {
     Q_OBJECT
 
 public:
-    Deployer(QStringList rpms);
+    Deployer(QStringList rpms, bool verbose=false);
     ~Deployer();
 
 public slots:
@@ -68,6 +68,7 @@ private:
     } state;
 
     QStringList rpms;
+    bool verbose_output;
 };
 
 #endif /* DEVEL_DEPLOY_RPM_DEPLOYER_H */

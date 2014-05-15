@@ -35,11 +35,12 @@
 #include "deployer.h"
 
 
-Deployer::Deployer(QStringList rpms)
+Deployer::Deployer(QStringList rpms, bool verbose)
     : QObject(0)
     , tx(0)
     , state(INITIAL)
     , rpms(rpms)
+    , verbose_output(verbose)
 {
 }
 
