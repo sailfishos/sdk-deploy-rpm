@@ -78,6 +78,13 @@ Deployer::run()
             }
             transaction()->installFiles(rpms,
                     PackageKit::Transaction::TransactionFlagNone);
+
+            if (tx->internalError()) {
+                fprintf(stderr, "Error: %u (%s)\n", tx->internalError(),
+                        qPrintable(tx->internalErrorMessage()));
+                exit(EXIT_FAILURE);
+            }
+
             state = INSTALLING;
             break;
 
