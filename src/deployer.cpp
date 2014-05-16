@@ -30,10 +30,6 @@
 
 #include <QCoreApplication>
 #include <QTimer>
-#include <QStringList>
-
-#include <Transaction>
-
 #include <cstdio>
 
 #include "deployer.h"
@@ -64,7 +60,8 @@ Deployer::transaction()
                    this, SLOT(onFinished(PackageKit::Transaction::Exit, uint)));
     QObject::connect(tx, SIGNAL(message(PackageKit::Transaction::Message, const QString &)),
                    this, SLOT(onMessage(PackageKit::Transaction::Message, const QString &)));
-
+    QObject::connect(tx, SIGNAL(errorCode(PackageKit::Transaction::Error, const QString &)),
+                     this, SLOT(onErrorCode(PackageKit::Transaction::Error, const QString &)));
     return tx;
 }
 
@@ -126,6 +123,7 @@ Deployer::onChanged()
     if (tx->remainingTime()) {
         fprintf(stderr, " (remaining: %ds)", tx->remainingTime());
     }
+
     fprintf(stderr, "\n");
 }
 
@@ -134,11 +132,12 @@ Deployer::onItemProgress(const QString &itemID,
         PackageKit::Transaction::Status status,
         uint percentage)
 {
+    Q_UNUSED(status);
     QStringList id = itemID.split(';');
     if (id.size() < 2) {
         id << "";
     }
-    fprintf(stderr, "%s %s: [%d %]", qPrintable(id[0]), qPrintable(id[1]), percentage);
+    fprintf(stderr, "%s %s: [%d %%]", qPrintable(id[0]), qPrintable(id[1]), percentage);
     fprintf(stderr, "\n");
 }
 
@@ -146,7 +145,7 @@ void
 Deployer::onFinished(PackageKit::Transaction::Exit status,
         uint runtime)
 {
-    fprintf(stderr, "Finished transaction (status=%d, runtime=%dms)\n", status, runtime);
+    fprintf(stderr, "Finished transaction (status=%u, runtime=%dms)\n", status, runtime);
     tx->deleteLater();
     tx = NULL;
 
@@ -159,5 +158,14 @@ void
 Deployer::onMessage(PackageKit::Transaction::Message type,
         const QString &message)
 {
+    Q_UNUSED(type);
     fprintf(stderr, "\nMessage: %s\n", qPrintable(message));
+}
+
+void
+Deployer::onErrorCode(PackageKit::Transaction::Error error,
+                      const QString &details)
+{
+    Q_UNUSED(error);
+    fprintf(stderr, "Error: %s\n", qPrintable(details));
 }

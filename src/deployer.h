@@ -53,6 +53,8 @@ public slots:
             uint runtime);
     void onMessage(PackageKit::Transaction::Message type,
             const QString &message);
+    void onErrorCode(PackageKit::Transaction::Error error,
+                     const QString &details);
 
 private:
     PackageKit::Transaction *transaction();
