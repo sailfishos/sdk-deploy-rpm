@@ -55,6 +55,9 @@ public slots:
             const QString &message);
     void onErrorCode(PackageKit::Transaction::Error error,
                      const QString &details);
+    void onPackage(PackageKit::Transaction::Info info,
+                   const QString &packageID,
+                   const QString &summary);
 
 private:
     PackageKit::Transaction *transaction();
