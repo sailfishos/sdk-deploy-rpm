@@ -36,31 +36,72 @@
 
 #include "deployer.h"
 
+const char *myname=0;
+
+void
+usage()
+{
+    fprintf(stderr,
+            "Usage:\n"
+            "   %s [OPTION] filename.rpm [...]\n"
+            "\n"
+            "Options:\n"
+            "   -v | --verbose   verbose output when installing packages\n"
+            "   -h | --help      this help\n"
+            "\n"
+            , myname);
+}
+
 int
 main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-
     QStringList args = QCoreApplication::arguments();
     args.pop_front();
 
-    QStringList rpms;
-    foreach (const QString &arg, args) {
-        QFileInfo info(arg);
-        if (!info.exists()) {
-            fprintf(stderr, "File does not exist: %s\n", qPrintable(arg));
-            return 2;
-        }
-
-        rpms << info.absoluteFilePath();
-    }
+    myname = argv[0];
 
     if (QCoreApplication::arguments().size() == 1) {
-        fprintf(stderr, "Usage: %s filename.rpm [...]\n", argv[0]);
+        usage();
         return 1;
     }
 
-    Deployer deployer(rpms);
+    QStringList rpms;
+    bool verbose = false;
+    while (!args.isEmpty()) {
+        const QString &arg = args.front();
+        if (arg == "-v" || arg == "--verbose") {
+            verbose = true;
+        }
+        else if (arg == "-h" || arg == "--help") {
+            usage();
+            return 0;
+        }
+        else if (arg[0] == '-') {
+            fprintf(stderr, "Unknown argument: %s\n", qPrintable(arg));
+            return 1;
+        }
+        else {
+            QFileInfo info(arg);
+            if (!info.exists()) {
+                fprintf(stderr, "File does not exist: %s\n", qPrintable(arg));
+                return 2;
+            }
+
+            rpms << info.absoluteFilePath();
+        }
+
+        args.pop_front();
+    }
+
+    if (rpms.isEmpty()) {
+        fprintf(stderr, "One or more rpm files required.\n");
+        return 1;
+    }
+
+    rpms.removeDuplicates();
+
+    Deployer deployer(rpms, verbose);
     deployer.run();
 
     return app.exec();

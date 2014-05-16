@@ -40,7 +40,7 @@ class Deployer : public QObject {
     Q_OBJECT
 
 public:
-    Deployer(QStringList rpms);
+    Deployer(QStringList rpms, bool verbose=false);
     ~Deployer();
 
 public slots:
@@ -53,6 +53,11 @@ public slots:
             uint runtime);
     void onMessage(PackageKit::Transaction::Message type,
             const QString &message);
+    void onErrorCode(PackageKit::Transaction::Error error,
+                     const QString &details);
+    void onPackage(PackageKit::Transaction::Info info,
+                   const QString &packageID,
+                   const QString &summary);
 
 private:
     PackageKit::Transaction *transaction();
@@ -66,6 +71,7 @@ private:
     } state;
 
     QStringList rpms;
+    bool verbose_output;
 };
 
 #endif /* DEVEL_DEPLOY_RPM_DEPLOYER_H */
