@@ -10,7 +10,7 @@ Release:    1
 Group:      System/Other
 License:    BSD
 Source0:    %{name}-%{version}.tar.bz2
-URL:        https://github.com/sailfish-sdk/sdk-deploy-rpm
+URL:        https://github.com/sailfishos/sdk-deploy-rpm
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(packagekit-qt5)
 
