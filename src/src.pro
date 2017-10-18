@@ -31,7 +31,7 @@
 QT -= gui
 
 CONFIG += link_pkgconfig
-PKGCONFIG += packagekit-qt5
+PKGCONFIG += packagekitqt5
 
 SOURCES += main.cpp
 

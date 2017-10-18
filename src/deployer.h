@@ -51,8 +51,6 @@ public slots:
             uint percentage);
     void onFinished(PackageKit::Transaction::Exit status,
             uint runtime);
-    void onMessage(PackageKit::Transaction::Message type,
-            const QString &message);
     void onErrorCode(PackageKit::Transaction::Error error,
                      const QString &details);
     void onPackage(PackageKit::Transaction::Info info,
@@ -60,8 +58,6 @@ public slots:
                    const QString &summary);
 
 private:
-    PackageKit::Transaction *transaction();
-
     PackageKit::Transaction *tx;
 
     enum State {
