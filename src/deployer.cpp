@@ -32,6 +32,8 @@
 #include <QTimer>
 #include <cstdio>
 
+#include <Daemon>
+
 #include "deployer.h"
 
 
@@ -48,26 +50,6 @@ Deployer::~Deployer()
 {
 }
 
-PackageKit::Transaction *
-Deployer::transaction()
-{
-    tx = new PackageKit::Transaction();
-
-    QObject::connect(tx, SIGNAL(changed()),
-                   this, SLOT(onChanged()));
-    QObject::connect(tx, SIGNAL(itemProgress(const QString &, PackageKit::Transaction::Status, uint)),
-                   this, SLOT(onItemProgress(const QString &, PackageKit::Transaction::Status, uint)));
-    QObject::connect(tx, SIGNAL(finished(PackageKit::Transaction::Exit, uint)),
-                   this, SLOT(onFinished(PackageKit::Transaction::Exit, uint)));
-    QObject::connect(tx, SIGNAL(message(PackageKit::Transaction::Message, const QString &)),
-                   this, SLOT(onMessage(PackageKit::Transaction::Message, const QString &)));
-    QObject::connect(tx, SIGNAL(errorCode(PackageKit::Transaction::Error, const QString &)),
-                     this, SLOT(onErrorCode(PackageKit::Transaction::Error, const QString &)));
-    QObject::connect(tx, SIGNAL(package(PackageKit::Transaction::Info, const QString &, const QString &)),
-                     this, SLOT(onPackage(PackageKit::Transaction::Info, const QString &, const QString &)));
-    return tx;
-}
-
 void
 Deployer::run()
 {
@@ -76,14 +58,19 @@ Deployer::run()
             if (verbose_output) {
                 fprintf(stderr, "INSTALLING\n");
             }
-            transaction()->installFiles(rpms,
-                    PackageKit::Transaction::TransactionFlagNone);
 
-            if (tx->internalError()) {
-                fprintf(stderr, "Error: %u (%s)\n", tx->internalError(),
-                        qPrintable(tx->internalErrorMessage()));
-                exit(EXIT_FAILURE);
-            }
+            tx = PackageKit::Daemon::installFiles(rpms, PackageKit::Transaction::TransactionFlagNone);
+
+            QObject::connect(tx, SIGNAL(statusChanged()), this, SLOT(onChanged()));
+            QObject::connect(tx, SIGNAL(percentageChanged()), this, SLOT(onChanged()));
+            QObject::connect(tx, SIGNAL(itemProgress(const QString &, PackageKit::Transaction::Status, uint)),
+                             this, SLOT(onItemProgress(const QString &, PackageKit::Transaction::Status, uint)));
+            QObject::connect(tx, SIGNAL(finished(PackageKit::Transaction::Exit, uint)),
+                             this, SLOT(onFinished(PackageKit::Transaction::Exit, uint)));
+            QObject::connect(tx, SIGNAL(errorCode(PackageKit::Transaction::Error, const QString &)),
+                             this, SLOT(onErrorCode(PackageKit::Transaction::Error, const QString &)));
+            QObject::connect(tx, SIGNAL(package(PackageKit::Transaction::Info, const QString &, const QString &)),
+                             this, SLOT(onPackage(PackageKit::Transaction::Info, const QString &, const QString &)));
 
             state = INSTALLING;
             break;
@@ -181,14 +168,6 @@ Deployer::onFinished(PackageKit::Transaction::Exit status,
 }
 
 void
-Deployer::onMessage(PackageKit::Transaction::Message type,
-        const QString &message)
-{
-    Q_UNUSED(type);
-    fprintf(stderr, "\nMessage: %s\n", qPrintable(message));
-}
-
-void
 Deployer::onErrorCode(PackageKit::Transaction::Error error,
                       const QString &details)
 {
@@ -202,6 +181,7 @@ Deployer::onPackage(PackageKit::Transaction::Info info,
                     const QString &summary)
 {
     Q_UNUSED(info);
+    Q_UNUSED(summary);
 
     // in verbose mode similar info has already been printed
     if (verbose_output) {
