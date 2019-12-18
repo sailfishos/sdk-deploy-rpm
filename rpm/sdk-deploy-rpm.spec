@@ -12,7 +12,7 @@ License:    BSD
 Source0:    %{name}-%{version}.tar.bz2
 URL:        https://github.com/sailfishos/sdk-deploy-rpm
 BuildRequires:  pkgconfig(Qt5Core)
-BuildRequires:  pkgconfig(packagekitqt5)
+BuildRequires:  pkgconfig(Qt5DBus)
 
 %description
 Tool to install local RPM packages in Sailfish OS.

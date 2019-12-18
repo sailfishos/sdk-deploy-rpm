@@ -31,7 +31,9 @@
 #include <QCoreApplication>
 #include <QStringList>
 #include <QFileInfo>
-
+#include <QDebug>
+#include <QDBusReply>
+#include <QUrl>
 #include <cstdio>
 
 #include "deployer.h"
@@ -46,7 +48,6 @@ usage()
             "   %s [OPTION] filename.rpm [...]\n"
             "\n"
             "Options:\n"
-            "   -v | --verbose   verbose output when installing packages\n"
             "   -h | --help      this help\n"
             "\n"
             , myname);
@@ -67,13 +68,10 @@ main(int argc, char *argv[])
     }
 
     QStringList rpms;
-    bool verbose = false;
+
     while (!args.isEmpty()) {
         const QString &arg = args.front();
-        if (arg == "-v" || arg == "--verbose") {
-            verbose = true;
-        }
-        else if (arg == "-h" || arg == "--help") {
+        if (arg == "-h" || arg == "--help") {
             usage();
             return 0;
         }
@@ -88,7 +86,8 @@ main(int argc, char *argv[])
                 return 2;
             }
 
-            rpms << info.absoluteFilePath();
+            rpms << QUrl::fromLocalFile(info.absoluteFilePath()).toString();
+            fprintf(stderr, "Installing %s.\n", qPrintable(info.fileName()));
         }
 
         args.pop_front();
@@ -101,8 +100,14 @@ main(int argc, char *argv[])
 
     rpms.removeDuplicates();
 
-    Deployer deployer(rpms, verbose);
-    deployer.run();
+    Deployer deployer(rpms);
+    QDBusReply<void> result = deployer.run();
 
+    if (!result.isValid()) {
+        qWarning() << Q_FUNC_INFO << "failed to request file installation:" << result.error().message();
+        return 1;
+    }
+
+    fprintf(stderr, "Please confirm installation on device.\n");
     return app.exec();
 }

@@ -29,9 +29,7 @@
 # 
 
 QT -= gui
-
-CONFIG += link_pkgconfig
-PKGCONFIG += packagekitqt5
+QT += dbus
 
 SOURCES += main.cpp
 
