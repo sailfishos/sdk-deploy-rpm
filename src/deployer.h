@@ -33,41 +33,26 @@
 
 #include <QObject>
 #include <QStringList>
-
-#include <Transaction>
+#include <QDBusReply>
+#include <QDBusInterface>
+#include <QDBusServiceWatcher>
 
 class Deployer : public QObject {
     Q_OBJECT
 
 public:
-    Deployer(QStringList rpms, bool verbose=false);
+    Deployer(QStringList rpms);
     ~Deployer();
+    QDBusReply<void> run();
 
 public slots:
-    void run();
-    void onChanged();
-    void onItemProgress(const QString &itemID,
-            PackageKit::Transaction::Status status,
-            uint percentage);
-    void onFinished(PackageKit::Transaction::Exit status,
-            uint runtime);
-    void onErrorCode(PackageKit::Transaction::Error error,
-                     const QString &details);
-    void onPackage(PackageKit::Transaction::Info info,
-                   const QString &packageID,
-                   const QString &summary);
+    void onFinished(bool success);
+    void onUnregistered(const QString &);
 
 private:
-    PackageKit::Transaction *tx;
-
-    enum State {
-        INITIAL = 0,
-        INSTALLING,
-        DONE,
-    } state;
-
     QStringList rpms;
-    bool verbose_output;
+    QDBusInterface client;
+    QDBusServiceWatcher watcher;
 };
 
 #endif /* DEVEL_DEPLOY_RPM_DEPLOYER_H */
