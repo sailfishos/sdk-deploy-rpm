@@ -33,12 +33,16 @@
 #include <QFileInfo>
 #include <QDebug>
 #include <QDBusReply>
+#include <QSettings>
 #include <QUrl>
 #include <cstdio>
 
 #include "deployer.h"
 
 const char *myname=0;
+const QString DEVICE_LOCK_SETTINGS("/usr/share/lipstick/devicelock/devicelock_settings.conf");
+const QString SIDELOADING_KEY("/desktop/nemo/devicelock/sideloading_allowed");
+const QString SILENTINSTALL_KEY("/desktop/nemo/devicelock/sideloading_silent");
 
 void
 usage()
@@ -61,6 +65,14 @@ main(int argc, char *argv[])
     args.pop_front();
 
     myname = argv[0];
+
+    // Check if sideloading is enabled
+    QSettings settings(DEVICE_LOCK_SETTINGS, QSettings::IniFormat);
+    if (settings.value(SIDELOADING_KEY, "0").toInt() == 0) {
+        fprintf(stderr, "Installation from untrusted software sources not enabled on device. Cannot continue.\n");
+        return 1;
+    }
+
 
     if (QCoreApplication::arguments().size() == 1) {
         usage();
@@ -108,6 +120,9 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    fprintf(stderr, "Please confirm installation on device.\n");
+    if (settings.value(SILENTINSTALL_KEY, "0").toInt() == 0) {
+        fprintf(stderr, "Please confirm installation on device.\n");
+    }
+
     return app.exec();
 }
