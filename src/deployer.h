@@ -48,6 +48,7 @@ public:
 public slots:
     void onFinished(bool success);
     void onUnregistered(const QString &);
+    void showConfirm();
 
 private:
     QStringList rpms;

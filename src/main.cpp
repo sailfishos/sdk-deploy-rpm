@@ -108,6 +108,5 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    fprintf(stderr, "Please confirm installation on device.\n");
     return app.exec();
 }

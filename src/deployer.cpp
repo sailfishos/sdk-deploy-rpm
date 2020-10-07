@@ -46,6 +46,7 @@ Deployer::Deployer(QStringList rpms)
     , watcher(DBUS_SERVICE, client.connection())
 {
     connect(&client, SIGNAL(installFinished(bool)), this, SLOT(onFinished(bool)));
+    connect(&client, SIGNAL(needConfirm()), this, SLOT(showConfirm()));
     connect(&watcher, &QDBusServiceWatcher::serviceUnregistered, this, &Deployer::onUnregistered);
 }
 
@@ -73,4 +74,9 @@ Deployer::onUnregistered(const QString &)
 {
     fprintf(stderr, "Installation failure: service died.\n");
     QCoreApplication::exit(1);
+}
+
+void Deployer::showConfirm()
+{
+    fprintf(stderr, "Please confirm installation on device.\n");
 }
