@@ -46,7 +46,7 @@ public:
     QDBusReply<void> run();
 
 public slots:
-    void onFinished(bool success);
+    void onFinished(bool success, const QString &errorString);
     void onUnregistered(const QString &);
     void showConfirm();
 
