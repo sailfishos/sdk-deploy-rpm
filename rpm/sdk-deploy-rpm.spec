@@ -1,8 +1,3 @@
-%{!?qtc_qmake:%define qtc_qmake %qmake}
-%{!?qtc_qmake5:%define qtc_qmake5 %qmake5}
-%{!?qtc_make:%define qtc_make make}
-%{?qtc_builddir:%define _builddir %qtc_builddir}
-
 Name:       sdk-deploy-rpm
 Summary:    Tool to install RPM packages.
 Version:    1.0
@@ -21,7 +16,7 @@ Tool to install local RPM packages in Sailfish OS.
 %setup -q -n %{name}-%{version}
 
 %build
-%qtc_qmake5
+%qmake5
 
 make %{?_smp_mflags}
 
