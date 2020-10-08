@@ -45,7 +45,7 @@ Deployer::Deployer(QStringList rpms)
     , client(DBUS_SERVICE, INSTALLATIONHANDLER_DBUS_PATH, DBUS_INTERFACE)
     , watcher(DBUS_SERVICE, client.connection())
 {
-    connect(&client, SIGNAL(installFinished(bool)), this, SLOT(onFinished(bool)));
+    connect(&client, SIGNAL(installFinished(bool,QString)), this, SLOT(onFinished(bool,QString)));
     connect(&client, SIGNAL(needConfirm()), this, SLOT(showConfirm()));
     connect(&watcher, &QDBusServiceWatcher::serviceUnregistered, this, &Deployer::onUnregistered);
 }
@@ -61,8 +61,10 @@ Deployer::run()
 }
 
 void 
-Deployer::onFinished(bool success)
+Deployer::onFinished(bool success, const QString &errorString)
 {
+    if (!success)
+        fprintf(stderr, "%s\n", qPrintable(errorString));
     fprintf(stderr, "Installation %s.\n", success ? "successful" : "failed");
     disconnect(&client, SIGNAL(installFinished(bool)), this, SLOT(onFinished(bool)));
     disconnect(&watcher, &QDBusServiceWatcher::serviceUnregistered, this, &Deployer::onUnregistered);
