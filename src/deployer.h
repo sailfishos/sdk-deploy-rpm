@@ -58,3 +58,22 @@ private:
     QDBusInterface client;
     QDBusServiceWatcher watcher;
 };
+
+class Undeployer : public QObject
+{
+    Q_OBJECT
+
+public:
+    Undeployer(const QStringList &packageNames);
+
+    QDBusReply<void> run();
+
+public slots:
+    void onFinished(bool success, const QString &errorString);
+    void onUnregistered(const QString &serviceName);
+
+private:
+    QStringList packageNames;
+    QDBusInterface client;
+    QDBusServiceWatcher watcher;
+};

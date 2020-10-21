@@ -49,28 +49,44 @@ main(int argc, char *argv[])
     };
 
     QCommandLineParser parser;
+    QCommandLineOption undeployOption("undeploy", tr("Undeploy previously deployed packages"));
+
     parser.addHelpOption();
-    parser.addPositionalArgument("file", tr("Package file to install"), "file...");
+    parser.addOptions({undeployOption});
+    parser.addPositionalArgument("package",
+            tr("Package file when deploying, package name when undeploying"), "package...");
 
     parser.process(app);
 
     if (parser.positionalArguments().isEmpty())
         parser.showHelp(1);
 
-    for (const QString &file : parser.positionalArguments()) {
-        if (!QFileInfo(file).exists()) {
-            qerr() << tr("No such file: %1").arg(file) << endl;
+    if (parser.isSet(undeployOption)) {
+        Undeployer undeployer(parser.positionalArguments());
+
+        QDBusReply<void> result = undeployer.run();
+        if (!result.isValid()) {
+            qCritical() << "Failed to request package removal:" << result.error().message();
             return 1;
         }
+
+        return app.exec();
+    } else {
+        for (const QString &file : parser.positionalArguments()) {
+            if (!QFileInfo(file).exists()) {
+                qerr() << tr("No such file: %1").arg(file) << endl;
+                return 1;
+            }
+        }
+
+        Deployer deployer(parser.positionalArguments());
+
+        QDBusReply<void> result = deployer.run();
+        if (!result.isValid()) {
+            qCritical() << "Failed to request file installation:" << result.error().message();
+            return 1;
+        }
+
+        return app.exec();
     }
-
-    Deployer deployer(parser.positionalArguments());
-
-    QDBusReply<void> result = deployer.run();
-    if (!result.isValid()) {
-        qCritical() << "Failed to request file installation:" << result.error().message();
-        return 1;
-    }
-
-    return app.exec();
 }

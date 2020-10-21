@@ -46,6 +46,10 @@ QTextStream &qerr()
     return qerr;
 }
 
+/*!
+ * \class Deployer
+ */
+
 Deployer::Deployer(const QStringList &packageFiles)
     : packageFiles(packageFiles)
     , client(DBUS_SERVICE, INSTALLATIONHANDLER_DBUS_PATH, DBUS_INTERFACE)
@@ -98,4 +102,46 @@ void
 Deployer::showConfirm()
 {
     qerr() << tr("Please confirm installation on device.") << endl;
+}
+
+/*!
+ * \class Undeployer
+ */
+
+Undeployer::Undeployer(const QStringList &packageNames)
+    : packageNames(packageNames)
+    , client(DBUS_SERVICE, INSTALLATIONHANDLER_DBUS_PATH, DBUS_INTERFACE)
+    , watcher(DBUS_SERVICE, client.connection())
+{
+    connect(&client, SIGNAL(removalFinished(bool,QString)), this, SLOT(onFinished(bool,QString)));
+    connect(&watcher, &QDBusServiceWatcher::serviceUnregistered, this, &Undeployer::onUnregistered);
+}
+
+QDBusReply<void>
+Undeployer::run()
+{
+    return client.call("removePackages", packageNames);
+}
+
+void
+Undeployer::onFinished(bool success, const QString &errorString)
+{
+    if (success) {
+        qerr() << tr("Uninstallation successful") << endl;
+    } else {
+        qerr() << errorString << endl;
+        qerr() << tr("Uninstallation falsed") << endl;
+    }
+
+    client.disconnect(this);
+    watcher.disconnect(this);
+    QCoreApplication::exit(success ? 0 : 1);
+}
+
+void
+Undeployer::onUnregistered(const QString &serviceName)
+{
+    Q_UNUSED(serviceName);
+    qerr() << tr("Uninstallation failure: service died.") << endl;
+    QCoreApplication::exit(1);
 }
