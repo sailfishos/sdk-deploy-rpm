@@ -28,83 +28,47 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <QCommandLineParser>
+#include <QCommandLineOption>
 #include <QCoreApplication>
 #include <QStringList>
 #include <QFileInfo>
 #include <QDebug>
 #include <QDBusReply>
 #include <QUrl>
-#include <cstdio>
 
 #include "deployer.h"
-
-const char *myname=0;
-
-void
-usage()
-{
-    fprintf(stderr,
-            "Usage:\n"
-            "   %s [OPTION] filename.rpm [...]\n"
-            "\n"
-            "Options:\n"
-            "   -h | --help      this help\n"
-            "\n"
-            , myname);
-}
 
 int
 main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-    QStringList args = QCoreApplication::arguments();
-    args.pop_front();
 
-    myname = argv[0];
+    auto tr = [](const char *message) {
+        return QCoreApplication::translate("main", message);
+    };
 
-    if (QCoreApplication::arguments().size() == 1) {
-        usage();
-        return 1;
-    }
+    QCommandLineParser parser;
+    parser.addHelpOption();
+    parser.addPositionalArgument("file", tr("Package file to install"), "file...");
 
-    QStringList rpms;
+    parser.process(app);
 
-    while (!args.isEmpty()) {
-        const QString &arg = args.front();
-        if (arg == "-h" || arg == "--help") {
-            usage();
-            return 0;
-        }
-        else if (arg[0] == '-') {
-            fprintf(stderr, "Unknown argument: %s\n", qPrintable(arg));
+    if (parser.positionalArguments().isEmpty())
+        parser.showHelp(1);
+
+    for (const QString &file : parser.positionalArguments()) {
+        if (!QFileInfo(file).exists()) {
+            qerr() << tr("No such file: %1").arg(file) << endl;
             return 1;
         }
-        else {
-            QFileInfo info(arg);
-            if (!info.exists()) {
-                fprintf(stderr, "File does not exist: %s\n", qPrintable(arg));
-                return 2;
-            }
-
-            rpms << QUrl::fromLocalFile(info.absoluteFilePath()).toString();
-            fprintf(stderr, "Installing %s.\n", qPrintable(info.fileName()));
-        }
-
-        args.pop_front();
     }
 
-    if (rpms.isEmpty()) {
-        fprintf(stderr, "One or more rpm files required.\n");
-        return 1;
-    }
+    Deployer deployer(parser.positionalArguments());
 
-    rpms.removeDuplicates();
-
-    Deployer deployer(rpms);
     QDBusReply<void> result = deployer.run();
-
     if (!result.isValid()) {
-        qWarning() << Q_FUNC_INFO << "failed to request file installation:" << result.error().message();
+        qCritical() << "Failed to request file installation:" << result.error().message();
         return 1;
     }
 

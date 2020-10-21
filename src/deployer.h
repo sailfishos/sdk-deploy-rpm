@@ -1,6 +1,3 @@
-#ifndef DEVEL_DEPLOY_RPM_DEPLOYER_H
-#define DEVEL_DEPLOY_RPM_DEPLOYER_H
-
 /*
  Copyright (C) 2014 Jolla Oy
  Contact: Jarko Vihriälä <jarko.vihriala@jolla.com>
@@ -31,29 +28,33 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#pragma once
+
 #include <QObject>
 #include <QStringList>
+#include <QTextStream>
 #include <QDBusReply>
 #include <QDBusInterface>
 #include <QDBusServiceWatcher>
 
-class Deployer : public QObject {
+QTextStream &qerr();
+
+class Deployer : public QObject
+{
     Q_OBJECT
 
 public:
-    Deployer(QStringList rpms);
-    ~Deployer();
+    Deployer(const QStringList &packageFiles);
+
     QDBusReply<void> run();
 
 public slots:
     void onFinished(bool success, const QString &errorString);
-    void onUnregistered(const QString &);
+    void onUnregistered(const QString &serviceName);
     void showConfirm();
 
 private:
-    QStringList rpms;
+    QStringList packageFiles;
     QDBusInterface client;
     QDBusServiceWatcher watcher;
 };
-
-#endif /* DEVEL_DEPLOY_RPM_DEPLOYER_H */
