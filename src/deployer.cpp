@@ -29,9 +29,10 @@
 */
 
 #include <QCoreApplication>
+#include <QFileInfo>
 #include <QTimer>
+#include <QUrl>
 #include <QDBusConnection>
-#include <cstdio>
 
 #include "deployer.h"
 
@@ -39,9 +40,18 @@ static const char * const DBUS_SERVICE = "org.sailfishos.installationhandler";
 static const char * const INSTALLATIONHANDLER_DBUS_PATH = "/org/sailfishos/installationhandler";
 static const char * const DBUS_INTERFACE = "org.sailfishos.installationhandler";
 
-Deployer::Deployer(QStringList rpms)
-    : QObject(0)
-    , rpms(rpms)
+QTextStream &qerr()
+{
+    static QTextStream qerr(stderr);
+    return qerr;
+}
+
+/*!
+ * \class Deployer
+ */
+
+Deployer::Deployer(const QStringList &packageFiles)
+    : packageFiles(packageFiles)
     , client(DBUS_SERVICE, INSTALLATIONHANDLER_DBUS_PATH, DBUS_INTERFACE)
     , watcher(DBUS_SERVICE, client.connection())
 {
@@ -50,35 +60,88 @@ Deployer::Deployer(QStringList rpms)
     connect(&watcher, &QDBusServiceWatcher::serviceUnregistered, this, &Deployer::onUnregistered);
 }
 
-Deployer::~Deployer()
-{
-}
-
 QDBusReply<void>
 Deployer::run()
 {
-    return client.call("installFiles", rpms);
+    QStringList urls;
+
+    for (const QString &file : packageFiles) {
+        QFileInfo info(file);
+        urls << QUrl::fromLocalFile(info.absoluteFilePath()).toString();
+        qerr() << tr("Installing %1").arg(info.fileName()) << endl;
+    }
+
+    urls.removeDuplicates();
+
+    return client.call("installFiles", urls);
 }
 
-void 
+void
 Deployer::onFinished(bool success, const QString &errorString)
 {
-    if (!success)
-        fprintf(stderr, "%s\n", qPrintable(errorString));
-    fprintf(stderr, "Installation %s.\n", success ? "successful" : "failed");
-    disconnect(&client, SIGNAL(installFinished(bool)), this, SLOT(onFinished(bool)));
-    disconnect(&watcher, &QDBusServiceWatcher::serviceUnregistered, this, &Deployer::onUnregistered);
+    if (success) {
+        qerr() << tr("Installation successful") << endl;
+    } else {
+        qerr() << errorString << endl;
+        qerr() << tr("Installation falsed") << endl;
+    }
+
+    client.disconnect(this);
+    watcher.disconnect(this);
     QCoreApplication::exit(success ? 0 : 1);
 }
 
 void
 Deployer::onUnregistered(const QString &)
 {
-    fprintf(stderr, "Installation failure: service died.\n");
+    qerr() << tr("Installation failure: service died.") << endl;
     QCoreApplication::exit(1);
 }
 
-void Deployer::showConfirm()
+void
+Deployer::showConfirm()
 {
-    fprintf(stderr, "Please confirm installation on device.\n");
+    qerr() << tr("Please confirm installation on device.") << endl;
+}
+
+/*!
+ * \class Undeployer
+ */
+
+Undeployer::Undeployer(const QStringList &packageNames)
+    : packageNames(packageNames)
+    , client(DBUS_SERVICE, INSTALLATIONHANDLER_DBUS_PATH, DBUS_INTERFACE)
+    , watcher(DBUS_SERVICE, client.connection())
+{
+    connect(&client, SIGNAL(removalFinished(bool,QString)), this, SLOT(onFinished(bool,QString)));
+    connect(&watcher, &QDBusServiceWatcher::serviceUnregistered, this, &Undeployer::onUnregistered);
+}
+
+QDBusReply<void>
+Undeployer::run()
+{
+    return client.call("removePackages", packageNames);
+}
+
+void
+Undeployer::onFinished(bool success, const QString &errorString)
+{
+    if (success) {
+        qerr() << tr("Uninstallation successful") << endl;
+    } else {
+        qerr() << errorString << endl;
+        qerr() << tr("Uninstallation falsed") << endl;
+    }
+
+    client.disconnect(this);
+    watcher.disconnect(this);
+    QCoreApplication::exit(success ? 0 : 1);
+}
+
+void
+Undeployer::onUnregistered(const QString &serviceName)
+{
+    Q_UNUSED(serviceName);
+    qerr() << tr("Uninstallation failure: service died.") << endl;
+    QCoreApplication::exit(1);
 }
