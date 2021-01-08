@@ -83,7 +83,7 @@ Deployer::onFinished(bool success, const QString &errorString)
         qerr() << tr("Installation successful") << endl;
     } else {
         qerr() << errorString << endl;
-        qerr() << tr("Installation falsed") << endl;
+        qerr() << tr("Installation failed") << endl;
     }
 
     client.disconnect(this);
@@ -130,7 +130,7 @@ Undeployer::onFinished(bool success, const QString &errorString)
         qerr() << tr("Uninstallation successful") << endl;
     } else {
         qerr() << errorString << endl;
-        qerr() << tr("Uninstallation falsed") << endl;
+        qerr() << tr("Uninstallation failed") << endl;
     }
 
     client.disconnect(this);
