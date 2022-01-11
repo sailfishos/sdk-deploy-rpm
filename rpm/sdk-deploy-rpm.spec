@@ -2,7 +2,6 @@ Name:       sdk-deploy-rpm
 Summary:    Tool to install RPM packages.
 Version:    1.0
 Release:    1
-Group:      System/Other
 License:    BSD
 Source0:    %{name}-%{version}.tar.bz2
 URL:        https://github.com/sailfishos/sdk-deploy-rpm
@@ -27,4 +26,5 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
+%license LICENSE.BSD
 %{_bindir}/sdk-deploy-rpm
